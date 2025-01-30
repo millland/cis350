@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         label1 = QLabel(self)
         label1.setGeometry(0, 0, 500, 500)
 
-        pixmap = QPixmap("chutesandladders.jpeg")
+        pixmap = QPixmap("chutesandladders.jpg")
         label1.setPixmap(pixmap)
         label1.setScaledContents(True)
 
