@@ -1,8 +1,8 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel,
                              QPushButton, QWidget, QVBoxLayout, QStackedWidget)
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtCore import QTimer, Qt
 from random import randint
 
 
@@ -59,6 +59,7 @@ class MainGame(QMainWindow):
         self.setGeometry(500, 250, 500, 600)
         self.initUI()
 
+    def initUI(self):
         # Background Image
         label1 = QLabel(self)
         label1.setGeometry(0, 0, 500, 500)
@@ -66,21 +67,63 @@ class MainGame(QMainWindow):
         label1.setPixmap(pixmap)
         label1.setScaledContents(True)
 
-        # Label for dice roll result
-        self.roll_label = QLabel("Click 'Roll Dice' to start", self)
-        self.roll_label.setGeometry(150, 550, 200, 30)
-        self.roll_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.roll_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        # Spinner Background
+        self.spinner_bg_label = QLabel(self)
+        self.spinner_bg_label.setGeometry(175, 600, 150, 150)
+        self.spinner_bg_pixmap = QPixmap("spinner.jpeg")  # Use an actual spinner background
+        self.spinner_bg_label.setPixmap(self.spinner_bg_pixmap)
+        self.spinner_bg_label.setScaledContents(True)
 
-    def roll_dice(self):
-        dice = randint(1, 6)
-        self.roll_label.setText(f"You rolled a {dice}")  # Update label text
+        # Spinner Arrow (Rotating)
+        self.spinner_label = QLabel(self)
+        self.spinner_label.setGeometry(175, 600, 150, 150)
+        self.spinner_pixmap = QPixmap("arrow.jpeg")  # Replace with actual arrow image
+        self.original_spinner_pixmap = self.spinner_pixmap  # Keep original for rotation
+        self.spinner_label.setPixmap(self.spinner_pixmap)
+        self.spinner_label.setScaledContents(True)
+        self.spinner_label.setFixedSize(150, 150)
+        self.spinner_label.setStyleSheet("background: transparent;")
+        self.spinner_label.raise_()
 
-    def initUI(self):
-        roll = QPushButton('Roll Dice', self)
-        roll.setGeometry(175, 500, 150, 50)
-        roll.setStyleSheet("font-size: 25px;")
-        roll.clicked.connect(self.roll_dice)
+
+        # Spin Button
+        self.spin_button = QPushButton("Spin", self)
+        self.spin_button.setGeometry(175, 550, 150, 50)
+        self.spin_button.setStyleSheet("font-size: 20px;")
+        self.spin_button.clicked.connect(self.start_spin)
+
+        # Result Label
+        self.result_label = QLabel("Click 'Spin' to start", self)
+        self.result_label.setGeometry(150, 520, 200, 30)
+        self.result_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.result_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+
+        # Timer for animation
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_spinner)
+        self.rotation_angle = 0
+        self.target_rotation = 0  # Rotation stopping point
+
+    def start_spin(self):
+        self.spin_button.setEnabled(False)  # Disable button while spinning
+        self.rotation_angle = 0
+        self.target_rotation = 360 * randint(3, 5) + randint(0, 5) * 60  # Spin 3-5 times & land at a multiple of 60°
+        self.timer.start(50)  # Rotate every 50ms
+
+    def update_spinner(self):
+        self.rotation_angle += 30  # Rotate by 30 degrees per frame
+        if self.rotation_angle >= self.target_rotation:  # Stop at final angle
+            self.timer.stop()
+            self.show_result()
+            self.spin_button.setEnabled(True)  # Re-enable button
+        else:
+            transform = QTransform().rotate(self.rotation_angle)
+            rotated_pixmap = self.original_spinner_pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+            self.spinner_label.setPixmap(rotated_pixmap)
+
+    def show_result(self):
+        result = (self.target_rotation % 360) // 60 + 1  # Convert angle to a number 1-6
+        self.result_label.setText(f"You spun a {result}")
 
 
 class MainWindow(QMainWindow):
