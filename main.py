@@ -77,7 +77,7 @@ class MainGame(QMainWindow):
         # Spinner Arrow (Rotating)
         self.spinner_label = QLabel(self)
         self.spinner_label.setGeometry(175, 600, 150, 150)
-        self.spinner_pixmap = QPixmap("arrow.jpeg")  # Replace with actual arrow image
+        self.spinner_pixmap = QPixmap("curvy-arrow.png")  # Replace with actual arrow image
         self.original_spinner_pixmap = self.spinner_pixmap  # Keep original for rotation
         self.spinner_label.setPixmap(self.spinner_pixmap)
         self.spinner_label.setScaledContents(True)
