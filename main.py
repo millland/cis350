@@ -88,7 +88,7 @@ class MainGame(QMainWindow):
 
         # Spin Button
         self.spin_button = QPushButton("Spin", self)
-        self.spin_button.setGeometry(175, 550, 150, 50)
+        self.spin_button.setGeometry(210, 550, 80, 40)
         self.spin_button.setStyleSheet("font-size: 20px;")
         self.spin_button.clicked.connect(self.start_spin)
 
@@ -103,6 +103,12 @@ class MainGame(QMainWindow):
         self.timer.timeout.connect(self.update_spinner)
         self.rotation_angle = 0
         self.target_rotation = 0  # Rotation stopping point
+
+        # Quit Button
+        self.quit = QPushButton("Quit", self)
+        self.quit.setGeometry(420, 705, 70, 40)
+        self.quit.setStyleSheet("font-size: 15px;")
+        self.quit.clicked.connect(sys.exit)
 
     def start_spin(self):
         self.spin_button.setEnabled(False)  # Disable button while spinning
