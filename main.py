@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.game_screen)   # Index 1
 
         self.setWindowTitle("Chutes and Ladders")
-        self.setGeometry(500, 250, 500, 600)
+        self.setGeometry(500, 250, 500, 900)
 
 
 def main():
