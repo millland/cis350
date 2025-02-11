@@ -79,7 +79,7 @@ class MainGame(QMainWindow):
         self.spinner_bg_label.setGeometry(125, 550, 250, 250)
 
 
-        self.spinner_bg_pixmap = QPixmap("spinner.jpeg")  # Load original image
+        self.spinner_bg_pixmap = QPixmap("spinner_transparent.png")  # Load original image
         transform = QTransform().rotate(-120)  # Rotate counterclockwise by 60°
         rotated_bg_pixmap = self.spinner_bg_pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
 
