@@ -18,23 +18,34 @@ class StartScreen(QWidget):
 
         # Game Logo
         logo_label = QLabel(self)
-        pixmap = QPixmap("chuteslogo.webp")  # Use an actual logo file
+        pixmap = QPixmap("chuteslogo.webp")
         logo_label.setPixmap(pixmap)
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         logo_label.setScaledContents(True)
-        logo_label.setFixedSize(400, 250)  # Adjust size
+        logo_label.setFixedSize(400, 200)
 
         # Buttons
+        button_style = """
+            QPushButton {
+                font-size: 20px;
+                padding: 12px;
+                border-radius: 10px;
+                background-color: green;
+                color: white;
+            }
+            
+        """
+
         start_button = QPushButton("Start Game")
-        start_button.setStyleSheet("font-size: 20px; padding: 10px;")
+        start_button.setStyleSheet(button_style)
         start_button.clicked.connect(self.start_game)
 
         load_button = QPushButton("Load Game")
-        load_button.setStyleSheet("font-size: 20px; padding: 10px;")
+        load_button.setStyleSheet(button_style)
         load_button.clicked.connect(self.load_game)
 
         quit_button = QPushButton("Quit")
-        quit_button.setStyleSheet("font-size: 20px; padding: 10px;")
+        quit_button.setStyleSheet(button_style)
         quit_button.clicked.connect(sys.exit)
 
         # Add widgets to layout
@@ -44,7 +55,6 @@ class StartScreen(QWidget):
         layout.addWidget(quit_button)
 
         self.setLayout(layout)
-
     def start_game(self):
         self.stacked_widget.setCurrentIndex(1)  # Switch to game screen
 
@@ -56,7 +66,7 @@ class MainGame(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Chutes and Ladders")
-        self.setGeometry(500, 250, 500, 600)
+        self.setGeometry(500, 250, 500, 900)
         self.initUI()
 
     def initUI(self):
@@ -100,13 +110,20 @@ class MainGame(QMainWindow):
 
         # Spin Button
         self.spin_button = QPushButton("Spin", self)
-        self.spin_button.setGeometry(210, 550, 80, 40)
-        self.spin_button.setStyleSheet("font-size: 20px;")
+        self.spin_button.setGeometry(210, 545, 80, 40)
+        self.spin_button.setStyleSheet(
+            "font-size: 18px; "
+            "font-weight: bold; "
+            "color: white; "
+            "background-color: blue; "
+            "border-radius: 10px; "
+            "padding: 10px; "
+        )
         self.spin_button.clicked.connect(self.start_spin)
 
         # Result Label
         self.result_label = QLabel("Click 'Spin' to start", self)
-        self.result_label.setGeometry(150, 520, 200, 30)
+        self.result_label.setGeometry(150, 510, 200, 30)
         self.result_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.result_label.setStyleSheet("font-size: 18px; font-weight: bold;")
 
@@ -119,7 +136,14 @@ class MainGame(QMainWindow):
         # Quit Button
         self.quit = QPushButton("Quit", self)
         self.quit.setGeometry(420, 705, 70, 40)
-        self.quit.setStyleSheet("font-size: 15px;")
+        self.quit.setStyleSheet(
+            "font-size: 15px; "
+            "font-weight: bold; "
+            "color: white; "
+            "background-color: red; "
+            "border-radius: 10px; "
+            "padding: 10px; "
+        )
         self.quit.clicked.connect(sys.exit)
 
     def start_spin(self):
@@ -160,7 +184,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.game_screen)   # Index 1
 
         self.setWindowTitle("Chutes and Ladders")
-        self.setGeometry(500, 250, 500, 900)
+        self.setGeometry(500, 250, 500, 800)
 
 
 def main():
