@@ -67,11 +67,23 @@ class MainGame(QMainWindow):
         label1.setPixmap(pixmap)
         label1.setScaledContents(True)
 
-        # Spinner Background
+        # Background Image
+        label1 = QLabel(self)
+        label1.setGeometry(0, 0, 500, 500)
+        pixmap = QPixmap("chutesandladders.jpg")
+        label1.setPixmap(pixmap)
+        label1.setScaledContents(True)
+
+        # Spinner Background (Rotated by 60°)
         self.spinner_bg_label = QLabel(self)
-        self.spinner_bg_label.setGeometry(175, 600, 150, 150)
-        self.spinner_bg_pixmap = QPixmap("spinner.jpeg")  # Use an actual spinner background
-        self.spinner_bg_label.setPixmap(self.spinner_bg_pixmap)
+        self.spinner_bg_label.setGeometry(125, 550, 250, 250)
+
+
+        self.spinner_bg_pixmap = QPixmap("spinner.jpeg")  # Load original image
+        transform = QTransform().rotate(-120)  # Rotate counterclockwise by 60°
+        rotated_bg_pixmap = self.spinner_bg_pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+
+        self.spinner_bg_label.setPixmap(rotated_bg_pixmap)
         self.spinner_bg_label.setScaledContents(True)
 
         # Spinner Arrow (Rotating)
