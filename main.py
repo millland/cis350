@@ -55,6 +55,7 @@ class StartScreen(QWidget):
         layout.addWidget(quit_button)
 
         self.setLayout(layout)
+
     def start_game(self):
         self.stacked_widget.setCurrentIndex(1)  # Switch to game screen
 
@@ -77,17 +78,9 @@ class MainGame(QMainWindow):
         label1.setPixmap(pixmap)
         label1.setScaledContents(True)
 
-        # Background Image
-        label1 = QLabel(self)
-        label1.setGeometry(0, 0, 500, 500)
-        pixmap = QPixmap("chutesandladders.jpg")
-        label1.setPixmap(pixmap)
-        label1.setScaledContents(True)
-
         # Spinner Background (Rotated by 60°)
         self.spinner_bg_label = QLabel(self)
         self.spinner_bg_label.setGeometry(125, 550, 250, 250)
-
 
         self.spinner_bg_pixmap = QPixmap("spinner_transparent.png")  # Load original image
         transform = QTransform().rotate(-120)  # Rotate counterclockwise by 60°
@@ -106,7 +99,6 @@ class MainGame(QMainWindow):
         self.spinner_label.setFixedSize(150, 150)
         self.spinner_label.setStyleSheet("background: transparent;")
         self.spinner_label.raise_()
-
 
         # Spin Button
         self.spin_button = QPushButton("Spin", self)
@@ -160,7 +152,8 @@ class MainGame(QMainWindow):
             self.spin_button.setEnabled(True)  # Re-enable button
         else:
             transform = QTransform().rotate(self.rotation_angle)
-            rotated_pixmap = self.original_spinner_pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+            rotated_pixmap = self.original_spinner_pixmap.transformed(transform,
+                                                                      Qt.TransformationMode.SmoothTransformation)
             self.spinner_label.setPixmap(rotated_pixmap)
 
     def show_result(self):
@@ -181,7 +174,7 @@ class MainWindow(QMainWindow):
 
         # Add screens to stacked widget
         self.stacked_widget.addWidget(self.start_screen)  # Index 0
-        self.stacked_widget.addWidget(self.game_screen)   # Index 1
+        self.stacked_widget.addWidget(self.game_screen)  # Index 1
 
         self.setWindowTitle("Chutes and Ladders")
         self.setGeometry(500, 250, 500, 800)
