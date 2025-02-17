@@ -1,9 +1,32 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel,
-                             QPushButton, QWidget, QVBoxLayout, QStackedWidget)
+                             QPushButton, QWidget, QVBoxLayout, QStackedWidget, QComboBox)
 from PyQt6.QtGui import QPixmap, QTransform
 from PyQt6.QtCore import QTimer, Qt
 from random import randint
+
+# Board mappings for chutes and ladders
+CHUTES_LADDERS = {
+    1: 38,
+    4: 14,
+    9: 31,
+    16: 6,
+    28: 84,
+    36: 44,
+    40: 42,
+    47: 26,
+    49: 11,
+    51: 67,
+    56: 53,
+    62: 19,
+    64: 60,
+    71: 91,
+    80: 100,
+    87: 24,
+    93: 73,
+    95: 75,
+    98: 78
+}
 
 
 class StartScreen(QWidget):
@@ -57,18 +80,85 @@ class StartScreen(QWidget):
         self.setLayout(layout)
 
     def start_game(self):
-        self.stacked_widget.setCurrentIndex(1)  # Switch to game screen
+        self.stacked_widget.setCurrentIndex(1)  # Switch to players screen
 
     def load_game(self):
         print("Not yet implemented")
 
 
-class MainGame(QMainWindow):
-    def __init__(self):
+class PlayersScreen(QWidget):
+    def __init__(self, stacked_widget):
+        super().__init__()
+        self.stacked_widget = stacked_widget
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Player selection dropdown
+        self.player_select = QComboBox()
+        self.player_select.addItems(["2 Players", "3 Players", "4 Players"])
+
+        # Game Logo
+        logo_label = QLabel(self)
+        pixmap = QPixmap("chuteslogo.webp")
+        logo_label.setPixmap(pixmap)
+        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo_label.setScaledContents(True)
+        logo_label.setFixedSize(400, 200)
+
+        # Buttons
+        button_style = """
+            QPushButton {
+                font-size: 20px;
+                padding: 12px;
+                border-radius: 10px;
+                background-color: green;
+                color: white;
+            }
+
+        """
+
+        start_button = QPushButton("Start Game")
+        start_button.setStyleSheet(button_style)
+        start_button.clicked.connect(self.start_game)
+
+        back_button = QPushButton("Back")
+        back_button.setStyleSheet(button_style)
+        back_button.clicked.connect(self.back)
+
+        # Add widgets to layout
+        layout.addWidget(logo_label)
+        layout.addWidget(QLabel("Select Number of Players:"))
+        layout.addWidget(self.player_select)
+        layout.addWidget(start_button)
+        layout.addWidget(back_button)
+
+        # Set layout properly
+        self.setLayout(layout)
+
+    def start_game(self):
+        num_players = int(self.player_select.currentText()[0])  # Extracts 2, 3, or 4
+        self.stacked_widget.widget(2).set_num_players(num_players)  # Pass to MainGame
+        self.stacked_widget.setCurrentIndex(2)  # Switch to game screen
+
+    def back(self):
+        self.stacked_widget.setCurrentIndex(0)  # Switch to start screen
+
+
+class MainGame(QMainWindow, QWidget):
+    def __init__(self, stacked_widget):
         super().__init__()
         self.setWindowTitle("Chutes and Ladders")
         self.setGeometry(500, 250, 500, 900)
+        self.stacked_widget = stacked_widget
+        self.num_players = 2  # Default to 2 players
         self.initUI()
+
+    def set_num_players(self, num_players):
+        self.num_players = num_players
+        # print(f"Number of players set to: {self.num_players}")
 
     def initUI(self):
         # Background Image
@@ -138,6 +228,19 @@ class MainGame(QMainWindow):
         )
         self.quit.clicked.connect(sys.exit)
 
+        # Back Button
+        self.back_button = QPushButton("Back", self)
+        self.back_button.setGeometry(10, 705, 70, 40)
+        self.back_button.setStyleSheet(
+            "font-size: 15px; "
+            "font-weight: bold; "
+            "color: white; "
+            "background-color: green; "
+            "border-radius: 10px; "
+            "padding: 10px; "
+        )
+        self.back_button.clicked.connect(self.back)
+
     def start_spin(self):
         self.spin_button.setEnabled(False)  # Disable button while spinning
         self.rotation_angle = 0
@@ -160,6 +263,9 @@ class MainGame(QMainWindow):
         result = (self.target_rotation % 360) // 60 + 1  # Convert angle to a number 1-6
         self.result_label.setText(f"You spun a {result}")
 
+    def back(self):
+        self.stacked_widget.setCurrentIndex(1)  # Switch to player screen
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -170,11 +276,13 @@ class MainWindow(QMainWindow):
 
         # Screens
         self.start_screen = StartScreen(self.stacked_widget)
-        self.game_screen = MainGame()
+        self.players_screen = PlayersScreen(self.stacked_widget)
+        self.game_screen = MainGame(self.stacked_widget)
 
         # Add screens to stacked widget
         self.stacked_widget.addWidget(self.start_screen)  # Index 0
-        self.stacked_widget.addWidget(self.game_screen)  # Index 1
+        self.stacked_widget.addWidget(self.players_screen)  # Index 1
+        self.stacked_widget.addWidget(self.game_screen)  # Index 2
 
         self.setWindowTitle("Chutes and Ladders")
         self.setGeometry(500, 250, 500, 800)
