@@ -154,6 +154,10 @@ class MainGame(QMainWindow, QWidget):
         self.setGeometry(500, 250, 500, 900)
         self.stacked_widget = stacked_widget
         self.num_players = 2  # Default to 2 players
+        self.player_pieces = []
+        self.player_positions = [0] * 4  # Support for up to 4 players
+        self.current_player = 0  # Track whose turn it is
+        self.result = 0
         self.initUI()
 
     def set_num_players(self, num_players):
@@ -167,6 +171,22 @@ class MainGame(QMainWindow, QWidget):
         pixmap = QPixmap("chutesandladders.jpg")
         label1.setPixmap(pixmap)
         label1.setScaledContents(True)
+
+        # Assign pictures to players
+        for i in range(self.num_players):
+            piece = QLabel(self)
+            pixmap = QPixmap(f"player{i + 1}.png")
+
+            if pixmap.isNull():
+                print(f"Error: player{i + 1}.png not found!")  # Debugging
+
+            piece.setPixmap(pixmap)
+            piece.setScaledContents(True)
+            piece.setFixedSize(30, 30)  # size of icon
+            x, y = self.get_pixel_position(1)  # Start at position 1
+            piece.move(x, y)
+            piece.raise_()  # Ensure the piece is drawn on top of the board
+            self.player_pieces.append(piece)
 
         # Spinner Background (Rotated by 60°)
         self.spinner_bg_label = QLabel(self)
@@ -241,6 +261,28 @@ class MainGame(QMainWindow, QWidget):
         )
         self.back_button.clicked.connect(self.back)
 
+    def get_pixel_position(self, board_position):
+        """
+        Converts board position (1-100) into (x, y) screen coordinates
+        for a 500x500 Chutes and Ladders board.
+        """
+        cell_size = 50  # Approximate cell size based on board dimensions
+        start_x, start_y = 0, 450  # Bottom-left starting position
+
+        # Mapping the board position (1-100) to pixel coordinates
+        row = (board_position - 1) // 10  # Determine row (0-9)
+        col = (board_position - 1) % 10  # Determine column (0-9)
+
+        # If the row is even, move left to right
+        if row % 2 == 0:
+            x = col * cell_size
+        else:  # If the row is odd, move right to left
+            x = (9 - col) * cell_size
+
+        y = start_y - (row * cell_size)  # Move up by row count
+
+        return x, y
+
     def start_spin(self):
         self.spin_button.setEnabled(False)  # Disable button while spinning
         self.rotation_angle = 0
@@ -261,7 +303,26 @@ class MainGame(QMainWindow, QWidget):
 
     def show_result(self):
         result = (self.target_rotation % 360) // 60 + 1  # Convert angle to a number 1-6
+        self.result = result
         self.result_label.setText(f"You spun a {result}")
+
+        QTimer.singleShot(500, self.next_turn)  # Wait half a second before moving the player
+
+    def next_turn(self):
+        self.player_positions[self.current_player] += self.result   # move forward
+        self.result_label.setText(
+            f"Player {self.current_player + 1} is now at {self.player_positions[self.current_player]}")
+
+        # Move the players piece on the board
+        x, y = self.get_pixel_position(self.player_positions[self.current_player])
+        self.player_pieces[self.current_player].move(x, y)
+
+        # Switch turn to next player
+        self.current_player = (self.current_player + 1) % self.num_players
+        self.result_label.setText(f"Player {self.current_player + 1}'s Turn")
+
+        self.result = 0
+        self.spin_button.setEnabled(True)
 
     def back(self):
         self.stacked_widget.setCurrentIndex(1)  # Switch to player screen
