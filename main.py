@@ -162,7 +162,6 @@ class MainGame(QMainWindow, QWidget):
 
     def set_num_players(self, num_players):
         self.num_players = num_players
-        # print(f"Number of players set to: {self.num_players}")
 
     def initUI(self):
         # Background Image
@@ -229,6 +228,12 @@ class MainGame(QMainWindow, QWidget):
         self.result_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.result_label.setStyleSheet("font-size: 18px; font-weight: bold;")
 
+        # Turn Label
+        self.turn_label = QLabel(self)
+        self.turn_label.setGeometry(20, 550, 200, 30)
+        self.turn_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.turn_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+
         # Timer for animation
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_spinner)
@@ -262,10 +267,6 @@ class MainGame(QMainWindow, QWidget):
         self.back_button.clicked.connect(self.back)
 
     def get_pixel_position(self, board_position):
-        """
-        Converts board position (1-100) into (x, y) screen coordinates
-        for a 500x500 Chutes and Ladders board.
-        """
         cell_size = 50  # Approximate cell size based on board dimensions
         start_x, start_y = 0, 450  # Bottom-left starting position
 
@@ -287,7 +288,7 @@ class MainGame(QMainWindow, QWidget):
         self.spin_button.setEnabled(False)  # Disable button while spinning
         self.rotation_angle = 0
         self.target_rotation = 360 * randint(3, 5) + randint(0, 5) * 60  # Spin 3-5 times & land at a multiple of 60°
-        self.timer.start(50)  # Rotate every 50ms
+        self.timer.start(25)  # Rotate every 50ms
 
     def update_spinner(self):
         self.rotation_angle += 30  # Rotate by 30 degrees per frame
@@ -309,17 +310,22 @@ class MainGame(QMainWindow, QWidget):
         QTimer.singleShot(500, self.next_turn)  # Wait half a second before moving the player
 
     def next_turn(self):
-        self.player_positions[self.current_player] += self.result   # move forward
-        self.result_label.setText(
-            f"Player {self.current_player + 1} is now at {self.player_positions[self.current_player]}")
+        # Move forward
+        self.player_positions[self.current_player] += self.result
+        new_position = self.player_positions[self.current_player]
 
-        # Move the players piece on the board
-        x, y = self.get_pixel_position(self.player_positions[self.current_player])
+        # Check for chutes or ladders
+        if new_position in CHUTES_LADDERS:
+            new_position = CHUTES_LADDERS[new_position]
+
+
+        # Move the player's piece on the board
+        x, y = self.get_pixel_position(new_position)
         self.player_pieces[self.current_player].move(x, y)
 
         # Switch turn to next player
         self.current_player = (self.current_player + 1) % self.num_players
-        self.result_label.setText(f"Player {self.current_player + 1}'s Turn")
+        self.turn_label.setText(f"Player {self.current_player + 1}'s Turn")
 
         self.result = 0
         self.spin_button.setEnabled(True)
