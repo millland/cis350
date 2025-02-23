@@ -59,9 +59,9 @@ class StartScreen(QWidget):
             
         """
 
-        start_button = QPushButton("Start Game")
-        start_button.setStyleSheet(button_style)
-        start_button.clicked.connect(self.start_game)
+        select_players = QPushButton("Select Players")
+        select_players.setStyleSheet(button_style)
+        select_players.clicked.connect(self.start_game)
 
         load_button = QPushButton("Load Game")
         load_button.setStyleSheet(button_style)
@@ -73,7 +73,7 @@ class StartScreen(QWidget):
 
         # Add widgets to layout
         layout.addWidget(logo_label)
-        layout.addWidget(start_button)
+        layout.addWidget(select_players)
         layout.addWidget(load_button)
         layout.addWidget(quit_button)
 
@@ -288,7 +288,7 @@ class MainGame(QMainWindow, QWidget):
         self.spin_button.setEnabled(False)  # Disable button while spinning
         self.rotation_angle = 0
         self.target_rotation = 360 * randint(3, 5) + randint(0, 5) * 60  # Spin 3-5 times & land at a multiple of 60°
-        self.timer.start(25)  # Rotate every 50ms
+        self.timer.start(25)  # Rotate every 25ms
 
     def update_spinner(self):
         self.rotation_angle += 30  # Rotate by 30 degrees per frame
@@ -314,10 +314,12 @@ class MainGame(QMainWindow, QWidget):
         self.player_positions[self.current_player] += self.result
         new_position = self.player_positions[self.current_player]
 
-        # Check for chutes or ladders
+        # Check for chutes or ladders and update position
         if new_position in CHUTES_LADDERS:
             new_position = CHUTES_LADDERS[new_position]
 
+        # **Fix: Store the updated position**
+        self.player_positions[self.current_player] = new_position
 
         # Move the player's piece on the board
         x, y = self.get_pixel_position(new_position)
