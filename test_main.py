@@ -1,10 +1,10 @@
 import sys
 import unittest
-from random import randint
+#from random import randint
 
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtTest import QTest
-from PyQt6.QtCore import Qt, QTimer
+#from PyQt6.QtTest import QTest
+#from PyQt6.QtCore import Qt, QTimer
 
 from main import MainWindow, MainGame, PlayersScreen, StartScreen, CHUTES_LADDERS
 
