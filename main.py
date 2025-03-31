@@ -141,6 +141,7 @@ class PlayersScreen(QWidget):
     def start_game(self):
         num_players = int(self.player_select.currentText()[0])  # Extracts 2, 3, or 4
         self.stacked_widget.widget(2).set_num_players(num_players)  # Pass to MainGame
+        self.stacked_widget.widget(2).assign_pictures()  # Make sure num_players is correct
         self.stacked_widget.setCurrentIndex(2)  # Switch to game screen
 
     def back(self):
@@ -163,15 +164,7 @@ class MainGame(QMainWindow, QWidget):
     def set_num_players(self, num_players):
         self.num_players = num_players
 
-    def initUI(self):
-        # Background Image
-        label1 = QLabel(self)
-        label1.setGeometry(0, 0, 500, 500)
-        pixmap = QPixmap("chutesandladders.jpg")
-        label1.setPixmap(pixmap)
-        label1.setScaledContents(True)
-
-        # Assign pictures to players
+    def assign_pictures(self):
         for i in range(self.num_players):
             piece = QLabel(self)
             pixmap = QPixmap(f"player{i + 1}.png")
@@ -186,6 +179,14 @@ class MainGame(QMainWindow, QWidget):
             piece.move(x, y)
             piece.raise_()  # Ensure the piece is drawn on top of the board
             self.player_pieces.append(piece)
+
+    def initUI(self):
+        # Background Image
+        label1 = QLabel(self)
+        label1.setGeometry(0, 0, 500, 500)
+        pixmap = QPixmap("chutesandladders.jpg")
+        label1.setPixmap(pixmap)
+        label1.setScaledContents(True)
 
         # Spinner Background (Rotated by 60°)
         self.spinner_bg_label = QLabel(self)
