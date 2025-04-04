@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel,
-                             QPushButton, QWidget, QVBoxLayout, QStackedWidget, QComboBox)
+                             QPushButton, QWidget, QVBoxLayout, QStackedWidget, QComboBox, QMessageBox)
 from PyQt6.QtGui import QPixmap, QTransform
 from PyQt6.QtCore import QTimer, Qt
 from random import randint
@@ -319,12 +319,29 @@ class MainGame(QMainWindow, QWidget):
         if new_position in CHUTES_LADDERS:
             new_position = CHUTES_LADDERS[new_position]
 
+            # Clamp to 100 if they go past it
+        if new_position > 100:
+            new_position = 100
+
         # **Fix: Store the updated position**
         self.player_positions[self.current_player] = new_position
 
         # Move the player's piece on the board
         x, y = self.get_pixel_position(new_position)
         self.player_pieces[self.current_player].move(x, y)
+
+        # Check win condition
+        if new_position >= 100:
+            winner = self.current_player + 1
+            self.result_label.setText(f"Player {winner} wins!")
+            self.turn_label.setText("Game Over")
+            self.spin_button.setEnabled(False)
+
+            # Switch to WinScreen
+            win_screen = self.stacked_widget.widget(3)
+            win_screen.set_winner(winner)
+            self.stacked_widget.setCurrentIndex(3)
+            return
 
         # Switch turn to next player
         self.current_player = (self.current_player + 1) % self.num_players
@@ -333,9 +350,59 @@ class MainGame(QMainWindow, QWidget):
         self.result = 0
         self.spin_button.setEnabled(True)
 
+    def reset_game(self):
+        self.player_positions = [0] * 4
+        self.current_player = 0
+        self.result = 0
+
+        for piece in self.player_pieces:
+            piece.hide()  # Hide old pieces
+
+        self.player_pieces.clear()  # Clear the list
+
+        self.spin_button.setEnabled(True)
+        self.turn_label.setText("Player 1's Turn")
+        self.result_label.setText("Click 'Spin' to start")
+
     def back(self):
         self.stacked_widget.setCurrentIndex(1)  # Switch to player screen
 
+class WinScreen(QWidget):
+    def __init__(self, stacked_widget):
+        super().__init__()
+        self.stacked_widget = stacked_widget
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.win_label = QLabel("Player X wins!")
+        self.win_label.setStyleSheet("font-size: 24px; font-weight: bold; color: green;")
+        self.win_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        play_again = QPushButton("Play Again")
+        play_again.setStyleSheet("font-size: 18px; padding: 10px; background-color: blue; color: white; border-radius: 10px;")
+        play_again.clicked.connect(self.play_again)
+
+        quit_button = QPushButton("Exit")
+        quit_button.setStyleSheet("font-size: 18px; padding: 10px; background-color: red; color: white; border-radius: 10px;")
+        quit_button.clicked.connect(sys.exit)
+
+        layout.addWidget(self.win_label)
+        layout.addWidget(play_again)
+        layout.addWidget(quit_button)
+
+        self.setLayout(layout)
+
+    def set_winner(self, player_number):
+        self.win_label.setText(f"🎉 Player {player_number} wins! 🎉")
+
+    def play_again(self):
+        # Reset game screen and go back to player select
+        game_screen = self.stacked_widget.widget(2)
+        game_screen.reset_game()
+        self.stacked_widget.setCurrentIndex(1)  # back to player select
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -353,6 +420,8 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.start_screen)  # Index 0
         self.stacked_widget.addWidget(self.players_screen)  # Index 1
         self.stacked_widget.addWidget(self.game_screen)  # Index 2
+        self.win_screen = WinScreen(self.stacked_widget)
+        self.stacked_widget.addWidget(self.win_screen)  # Index 3
 
         self.setWindowTitle("Chutes and Ladders")
         self.setGeometry(500, 250, 500, 800)
