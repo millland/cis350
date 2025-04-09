@@ -1,9 +1,12 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel,
                              QPushButton, QWidget, QVBoxLayout, QStackedWidget, QComboBox, QMessageBox)
-from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtGui import QPixmap, QTransform, QFont
 from PyQt6.QtCore import QTimer, Qt
 from random import randint
+import json
+import os
+import glob
 
 # Board mappings for chutes and ladders
 CHUTES_LADDERS = {
@@ -83,7 +86,26 @@ class StartScreen(QWidget):
         self.stacked_widget.setCurrentIndex(1)  # Switch to players screen
 
     def load_game(self):
-        print("Not yet implemented")
+        # Look for all matching files
+        files = glob.glob("chutes_and_ladders*.json")
+        if not files:
+            print("No saved game found.")
+            return
+
+        # Sort files by modified time, most recent first
+        files.sort(key=os.path.getmtime, reverse=True)
+        filename = files[0]
+
+        try:
+            with open(filename, "r") as f:
+                data = json.load(f)
+                MainGame.num_players = data["num_players"]
+                MainGame.player_positions = data["player_positions"]
+                MainGame.current_player = data["current_player"]
+            self.stacked_widget.setCurrentIndex(4)
+            print(f"Loaded game from {filename}")
+        except Exception as e:
+            print(f"Failed to load game from {filename}: {e}")
 
 
 class PlayersScreen(QWidget):
@@ -143,6 +165,84 @@ class PlayersScreen(QWidget):
         self.stacked_widget.widget(2).set_num_players(num_players)  # Pass to MainGame
         self.stacked_widget.widget(2).assign_pictures()  # Make sure num_players is correct
         self.stacked_widget.setCurrentIndex(2)  # Switch to game screen
+
+    def back(self):
+        self.stacked_widget.setCurrentIndex(0)  # Switch to start screen
+
+
+class LoadGameScreen(QWidget):
+    def __init__(self, stacked_widget):
+        super().__init__()
+        self.stacked_widget = stacked_widget
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.label = QLabel("Select a saved game:")
+        self.label.setStyleSheet("font-size: 20px;"
+                                 "font-family: arial;"
+                                 "font-weight: bold;")
+        self.combo = QComboBox()
+
+        # Load available saved games
+        self.load_saved_games()
+
+        # Buttons
+        button_style = """
+            QPushButton {
+                font-size: 20px;
+                padding: 12px;
+                border-radius: 10px;
+                background-color: green;
+                color: white;
+            }
+
+        """
+
+        load_button = QPushButton("Load Selected Game")
+        load_button.setStyleSheet(button_style)
+        load_button.clicked.connect(self.load_selected_game)
+
+        back_button = QPushButton("Back")
+        back_button.setStyleSheet(button_style)
+        back_button.clicked.connect(self.back)
+
+        layout.addWidget(self.label)
+        layout.addWidget(self.combo)
+        layout.addWidget(load_button)
+        layout.addWidget(back_button)
+
+        self.setLayout(layout)
+
+    def load_saved_games(self):
+        import os
+        self.combo.clear()
+        saves = [f for f in os.listdir() if f.endswith(".json")]
+        if not saves:
+            self.combo.addItem("No saved games")
+        else:
+            self.combo.addItems(saves)
+
+    def load_selected_game(self):
+        filename = self.combo.currentText()
+        if filename == "No saved games":
+            QMessageBox.warning(self, "No Saves", "There are no saved games to load.")
+            return
+
+        try:
+            with open(filename, "r") as f:
+                data = json.load(f)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load save file.\n{e}")
+            return
+
+        # Pass data to MainGame and update the game screen
+        game_screen = self.stacked_widget.widget(2)
+        game_screen.load(data)
+
+        self.stacked_widget.setCurrentIndex(2)  # Go to game screen
 
     def back(self):
         self.stacked_widget.setCurrentIndex(0)  # Switch to start screen
@@ -241,9 +341,22 @@ class MainGame(QMainWindow, QWidget):
         self.rotation_angle = 0
         self.target_rotation = 0  # Rotation stopping point
 
+        # Save and Quit Button
+        self.quit = QPushButton("Save and Quit", self)
+        self.quit.setGeometry(360, 705, 130, 40)
+        self.quit.setStyleSheet(
+            "font-size: 15px; "
+            "font-weight: bold; "
+            "color: white; "
+            "background-color: red; "
+            "border-radius: 10px; "
+            "padding: 10px; "
+        )
+        self.quit.clicked.connect(self.save)
+
         # Quit Button
         self.quit = QPushButton("Quit", self)
-        self.quit.setGeometry(420, 705, 70, 40)
+        self.quit.setGeometry(420, 650, 70, 40)
         self.quit.setStyleSheet(
             "font-size: 15px; "
             "font-weight: bold; "
@@ -266,6 +379,15 @@ class MainGame(QMainWindow, QWidget):
             "padding: 10px; "
         )
         self.back_button.clicked.connect(self.back)
+
+    def update_piece_positions(self):
+        for i in range(self.num_players):
+            position = self.player_positions[i]
+            x, y = self.get_pixel_position(position)
+            self.player_pieces[i].move(x, y)
+
+    def update_turn_label(self):
+        self.turn_label.setText(f"Player {self.current_player + 1}'s Turn")
 
     def get_pixel_position(self, board_position):
         cell_size = 50  # Approximate cell size based on board dimensions
@@ -367,6 +489,36 @@ class MainGame(QMainWindow, QWidget):
     def back(self):
         self.stacked_widget.setCurrentIndex(1)  # Switch to player screen
 
+    def save(self):
+        import datetime
+        data = {
+            "num_players": self.num_players,
+            "player_positions": self.player_positions,
+            "current_player": self.current_player
+        }
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        filename = f"chutes_and_ladders_{timestamp}.json"
+        with open(filename, "w") as f:
+            json.dump(data, f)
+
+        QMessageBox.information(self, "Saved", f"Game saved as {filename}")
+        QApplication.quit()
+
+    def load(self, data):
+        self.num_players = data["num_players"]
+        self.player_positions = data["player_positions"]
+        self.current_player = data["current_player"]
+
+        # Clear old pieces
+        for piece in self.player_pieces:
+            piece.setParent(None)
+        self.player_pieces.clear()
+
+        self.assign_pictures()
+        self.update_piece_positions()
+        self.update_turn_label()
+
+
 class WinScreen(QWidget):
     def __init__(self, stacked_widget):
         super().__init__()
@@ -382,11 +534,13 @@ class WinScreen(QWidget):
         self.win_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         play_again = QPushButton("Play Again")
-        play_again.setStyleSheet("font-size: 18px; padding: 10px; background-color: blue; color: white; border-radius: 10px;")
+        play_again.setStyleSheet(
+            "font-size: 18px; padding: 10px; background-color: blue; color: white; border-radius: 10px;")
         play_again.clicked.connect(self.play_again)
 
         quit_button = QPushButton("Exit")
-        quit_button.setStyleSheet("font-size: 18px; padding: 10px; background-color: red; color: white; border-radius: 10px;")
+        quit_button.setStyleSheet(
+            "font-size: 18px; padding: 10px; background-color: red; color: white; border-radius: 10px;")
         quit_button.clicked.connect(sys.exit)
 
         layout.addWidget(self.win_label)
@@ -404,6 +558,7 @@ class WinScreen(QWidget):
         game_screen.reset_game()
         self.stacked_widget.setCurrentIndex(1)  # back to player select
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -415,13 +570,15 @@ class MainWindow(QMainWindow):
         self.start_screen = StartScreen(self.stacked_widget)
         self.players_screen = PlayersScreen(self.stacked_widget)
         self.game_screen = MainGame(self.stacked_widget)
+        self.win_screen = WinScreen(self.stacked_widget)
+        self.load_game_screen = LoadGameScreen(self.stacked_widget)
 
         # Add screens to stacked widget
         self.stacked_widget.addWidget(self.start_screen)  # Index 0
         self.stacked_widget.addWidget(self.players_screen)  # Index 1
         self.stacked_widget.addWidget(self.game_screen)  # Index 2
-        self.win_screen = WinScreen(self.stacked_widget)
         self.stacked_widget.addWidget(self.win_screen)  # Index 3
+        self.stacked_widget.addWidget(self.load_game_screen)  # Index 4
 
         self.setWindowTitle("Chutes and Ladders")
         self.setGeometry(500, 250, 500, 800)
